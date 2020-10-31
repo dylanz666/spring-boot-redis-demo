@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -14,12 +15,12 @@ import java.util.Set;
  * @since : 10/28/2020
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/cache")
 public class RedisStringController {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
-    @PostMapping("/cache/string")
+    @PostMapping("/string")
     public @ResponseBody
     RedisStringCache redisStringCache(@RequestBody RedisStringCache redisStringCache) {
         String key = redisStringCache.getKey();
@@ -34,7 +35,7 @@ public class RedisStringController {
         return cached;
     }
 
-    @PostMapping("/cache/hash")
+    @PostMapping("/hash")
     public @ResponseBody
     RedisHashCache redisHashCache(@RequestBody RedisHashCache redisHashCache) {
         String key = redisHashCache.getKey();
@@ -51,7 +52,7 @@ public class RedisStringController {
         return cached;
     }
 
-    @PostMapping("/cache/list")
+    @PostMapping("/list")
     public @ResponseBody
     RedisListCache redisListCache(@RequestBody RedisListCache redisListCache) {
         String key = redisListCache.getKey();
@@ -66,7 +67,7 @@ public class RedisStringController {
         return cached;
     }
 
-    @PostMapping("/cache/set")
+    @PostMapping("/set")
     public @ResponseBody
     RedisSetCache redisSetCache(@RequestBody RedisSetCache redisSetCache) {
         String key = redisSetCache.getKey();
@@ -82,7 +83,7 @@ public class RedisStringController {
         return cached;
     }
 
-    @PostMapping("/cache/zset")
+    @PostMapping("/zset")
     public @ResponseBody
     RedisZsetCache redisZsetCache(@RequestBody RedisZsetCache redisZsetCache) {
         String key = redisZsetCache.getKey();
@@ -98,6 +99,21 @@ public class RedisStringController {
         cached.setValue(value);
         cached.setScore(score);
         cached.setZset(cachedZset);
+        return cached;
+    }
+
+    @PostMapping("/expire/string")
+    public @ResponseBody
+    RedisStringCache redisStringCacheWithExpireTime(@RequestBody RedisStringCache redisStringCache) {
+        String key = redisStringCache.getKey();
+        String value = redisStringCache.getValue();
+
+        stringRedisTemplate.opsForValue().set(key, value, Duration.ofMinutes(2));
+        String cachedValue = stringRedisTemplate.opsForValue().get(key);
+
+        RedisStringCache cached = new RedisStringCache();
+        cached.setKey(key);
+        cached.setValue(cachedValue);
         return cached;
     }
 }
