@@ -1,5 +1,6 @@
 package com.github.dylanz666.config;
 
+import com.github.dylanz666.listener.MessageReceiver;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +10,9 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.serializer.*;
 
 import java.time.Duration;
@@ -71,5 +75,20 @@ public class RedisConfig {
                 .disableCachingNullValues();
 
         return RedisCacheManager.builder(redisConnectionFactory).cacheDefaults(redisCacheConfiguration).build();
+    }
+
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory redisConnectionFactory, MessageListenerAdapter messageListenerAdapter) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(redisConnectionFactory);
+
+        //此处添加消息监听（即订阅），可根据channel的业务划分情况，在此处统一加入多个消息监听
+        container.addMessageListener(messageListenerAdapter, new PatternTopic("channel:demo"));
+        return container;
+    }
+
+    @Bean
+    public MessageListenerAdapter messageListenerAdapter(MessageReceiver myRedisMessageListener) {
+        return new MessageListenerAdapter(myRedisMessageListener, "onMessage");
     }
 }
